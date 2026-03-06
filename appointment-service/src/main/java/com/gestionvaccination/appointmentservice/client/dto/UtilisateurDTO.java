@@ -1,6 +1,7 @@
 package com.gestionvaccination.appointmentservice.client.dto;
 
 import com.gestionvaccination.appointmentservice.client.dto.EnfantDTO;
+import com.gestionvaccination.appointmentservice.client.enumeration.LangueMaternelle;
 import com.gestionvaccination.appointmentservice.client.enumeration.UserRole;
 import lombok.Data;
 
@@ -71,6 +72,8 @@ public class UtilisateurDTO {
 //    private Date updatedAt;
 //
 //    private List<EnfantDTO> enfants;
+
+    private LangueMaternelle langueMaternelle;
 
 
 }

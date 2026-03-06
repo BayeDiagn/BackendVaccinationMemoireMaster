@@ -7,6 +7,7 @@ import com.gestionvaccination.appointmentservice.enumeration.StatutRv;
 import com.gestionvaccination.appointmentservice.repository.AppointmentRepository;
 import com.gestionvaccination.appointmentservice.service.AppointmentService;
 
+import com.gestionvaccination.appointmentservice.service.AudioReminderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,12 +25,14 @@ public class VaccinationReminderScheduler {
     private final AppointmentRepository appointmentRepository;
     private final AppointmentService appointmentService;
     private final EmailService emailService;
+    private final AudioReminderService audioReminderService;
 
     /**
      * Planificateur qui s'exécute tous les jours à 13h40
      * Cette méthode envoie les rappels pour les rendez-vous à venir
      */
-    @Scheduled(cron = "0 45 01 * * ?")
+//    @Scheduled(cron = "0 45 01 * * ?")
+    @Scheduled(cron = "0 * * * * ?")
     public void sendVaccinationReminders() {
         log.info("Démarrage de l'envoi des rappels à {}", LocalDateTime.now());
 
@@ -67,17 +70,29 @@ public class VaccinationReminderScheduler {
                     log.info("Envoi du rappel à {} pour l'enfant {} {}",
                             parent.getEmail(), enfant.getPrenom(), enfant.getNom());
 
-                    emailService.sendVaccinationReminder(
-                            enfant.getParent().getEmail(),
-                            parent.getNom(),
-                            enfant.getPrenom(),
-                            enfant.getNom(),
-                            appointment.getDate(),
-                            appointment.getNomVaccinAEffectuer(),
-                            daysRemaining
-                    );
+//                    emailService.sendVaccinationReminder(
+//                            enfant.getParent().getEmail(),
+//                            parent.getNom(),
+//                            enfant.getPrenom(),
+//                            enfant.getNom(),
+//                            appointment.getDate(),
+//                            appointment.getNomVaccinAEffectuer(),
+//                            daysRemaining
+//                    );
 
                     log.info("Rappel envoyé avec succès");
+
+                    if(parent.getLangueMaternelle() != null){
+
+                        audioReminderService.sendAudioReminder(
+                                parent.getTelephone(),
+                                parent.getLangueMaternelle().name()
+                        );
+
+                    }
+
+                    //audioReminderService.sendAudioReminder("782944658","WOLOF");
+
                 } else {
                     log.warn("Données manquantes pour le rendez-vous ID: {}", appointment.getId());
                     if (parent == null) log.warn("Parent manquant");
