@@ -222,4 +222,18 @@ public class EnfantServiceImpl implements EnfantService {
     }
 
 
+    @Override
+    public List<EnfantDTO> getEnfantByParentId(Long parentId) {
+
+        Utilisateur parent = utilisateurRepository.findById(parentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Parent non trouvé avec id " + parentId));
+
+        List<Enfant> enfants = enfantRepository.findByParentId(parentId);
+
+        return enfants.stream()
+                .map(enfantMapper::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+
 }

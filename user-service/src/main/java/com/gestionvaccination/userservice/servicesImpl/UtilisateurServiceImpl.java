@@ -193,6 +193,7 @@ public class UtilisateurServiceImpl implements UtilisateurService {
         authRequestDTO.setUsername(saveParentDTO.getEmail());
         authRequestDTO.setPassword(saveParentDTO.getPassword());
         authRequestDTO.setRole(userRole.name());
+        authRequestDTO.setLangueMaternelle(saveParentDTO.getLangueMaternelle());
         authServiceClient.SaveUser(authRequestDTO);
 
         return userDTO;
@@ -215,9 +216,12 @@ public class UtilisateurServiceImpl implements UtilisateurService {
 
         Utilisateur utilisateur = utilisateurRepository.findByEmail(email);
 
-        UtilisateurDTO utilisateurDTO = utilisateurMapper.fromEntity(utilisateur);
+        //UtilisateurDTO utilisateurDTO = utilisateurMapper.fromEntity(utilisateur);
 
-        return utilisateurDTO ;
+        // ESSENTIEL: remplir centre/locality (transient) depuis microservice localité
+        entityEnrichmentService.enrichUtilisateurWithAllData(utilisateur);
+
+        return utilisateurMapper.fromEntity(utilisateur) ;
     }
 
     @Override

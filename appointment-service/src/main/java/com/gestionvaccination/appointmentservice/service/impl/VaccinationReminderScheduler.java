@@ -82,16 +82,16 @@ public class VaccinationReminderScheduler {
 
                     log.info("Rappel envoyé avec succès");
 
-                    if(parent.getLangueMaternelle() != null){
+//                    if(parent.getLangueMaternelle() != null){
+//
+//                        audioReminderService.sendAudioReminder(
+//                                parent.getTelephone(),
+//                                parent.getLangueMaternelle().name()
+//                        );
+//
+//                    }
 
-                        audioReminderService.sendAudioReminder(
-                                parent.getTelephone(),
-                                parent.getLangueMaternelle().name()
-                        );
-
-                    }
-
-                    //audioReminderService.sendAudioReminder("782944658","WOLOF");
+                    audioReminderService.sendAudioReminder("782944658","WOLOF");
 
                 } else {
                     log.warn("Données manquantes pour le rendez-vous ID: {}", appointment.getId());
@@ -111,11 +111,24 @@ public class VaccinationReminderScheduler {
      * Décommentez cette méthode pour tester la fonctionnalité
      */
     /*
-    @Scheduled(cron = "0 * * * * ?")
-    public void testVaccinationReminders() {
-        log.info("TEST - Démarrage de l'envoi des rappels à {}", LocalDateTime.now());
-        sendVaccinationReminders();
-        log.info("TEST - Fin de l'envoi des rappels");
+//    @Scheduled(cron = "0 * * * * ?")
+//    public void testVaccinationReminders() {
+//        log.info("TEST - Démarrage de l'envoi des rappels à {}", LocalDateTime.now());
+//        sendVaccinationReminders();
+//        log.info("TEST - Fin de l'envoi des rappels");
+//    }
+//    */
+//
+//
+//    @Scheduled(cron = "0 * * * * ?")
+    public void testCall() {
+
+        log.info("Test appel Twilio");
+
+        audioReminderService.sendAudioReminder(
+                "+221782944658",
+                "WOLOF"
+        );
+
     }
-    */
 }

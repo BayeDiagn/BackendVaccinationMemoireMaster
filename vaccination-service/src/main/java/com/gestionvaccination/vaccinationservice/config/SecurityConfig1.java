@@ -42,6 +42,7 @@ public class SecurityConfig1 {
                                 "/api/v1/users/**",
                                 "/api/v1/users/{userId}",
                                 "/api/v1/users/enfants/{enfantId}",
+                                "/api/v1/users/enfants/parent/{parentId}",
                                 "/api/v1/appointments/{appointmentId}/status"
                                 ).permitAll()
                         .requestMatchers("/api/v1/users/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_INFIRMIER", "ROLE_ICP")

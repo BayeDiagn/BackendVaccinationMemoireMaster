@@ -5,6 +5,7 @@ import com.gestionvaccination.userservice.enumeration.Sexe;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -20,5 +21,7 @@ public interface EnfantRepository extends JpaRepository<Enfant, Long> {
 
     // Compte le nombre d'enfants par sexe
     long countBySexe(Sexe sexe);
+
+    List<Enfant> findByParentId(Long parentId);
 
 }

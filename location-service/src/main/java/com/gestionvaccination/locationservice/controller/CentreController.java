@@ -142,11 +142,10 @@ public class CentreController {
                 required = true
                 // example = "Médina"
         )
-        @RequestParam String quartier,
 
         @Valid @RequestBody SaveCentreDTO saveCentreDTO
         ) {
-                CentreDTO createdCentre = centreService.saveCentre(saveCentreDTO, CentreType.POSTE_DE_SANTE, quartier);
+                CentreDTO createdCentre = centreService.saveCentre(saveCentreDTO, CentreType.POSTE_DE_SANTE, null);
                 return new ResponseEntity<>(createdCentre, HttpStatus.CREATED);
         }
 

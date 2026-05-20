@@ -1,14 +1,23 @@
 package com.gestionvaccination.appointmentservice.service.impl;
 
 import com.gestionvaccination.appointmentservice.service.AudioReminderService;
+import com.twilio.rest.api.v2010.account.Call;
+import com.twilio.type.PhoneNumber;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
+import java.net.URI;
 
 @Service
 @Slf4j
 public class AudioReminderServiceImpl implements AudioReminderService {
+
+    @Value("${twilio.phone.number}")
+    private String twilioPhoneNumber;
+
+    @Value("${audio.url.base}")
+    private String audioBaseUrl;
 
     @Override
     public void sendAudioReminder(String phoneNumber, String langue) {
@@ -20,43 +29,29 @@ public class AudioReminderServiceImpl implements AudioReminderService {
             switch (langue.toUpperCase()) {
 
                 case "WOLOF":
-                    audioFile = "audios/wolof.mpeg";
+                    audioFile = "wolof1.mp3";
                     break;
 
-//                case "PULAAR":
-//                    audioFile = "audios/wolof.mpeg";
-//                    break;
-//
-//                case "SERERE":
-//                    audioFile = "audios/wolof.mpeg";
-//                    break;
-//
-//                case "FRANCAIS":
-//                    audioFile = "audios/wolof.mpeg";
-//                    break;
-
                 default:
-                    log.warn("Langue non supportée pour audio : {}", langue);
+                    log.warn("Langue non supportée : {}", langue);
                     return;
             }
 
-            InputStream audioStream = getClass()
-                    .getClassLoader()
-                    .getResourceAsStream(audioFile);
+            // ✅ Correction ici
+            String audioUrl = audioBaseUrl + "/" + audioFile;
 
-            if (audioStream == null) {
-                log.error("Fichier audio introuvable : {}", audioFile);
-                return;
-            }
+            log.info("Appel vers {} avec audio {}", phoneNumber, audioUrl);
 
-            log.info("Audio trouvé : {}", audioFile);
-            log.info("Simulation envoi audio au numéro : {}", phoneNumber);
+            Call call = Call.creator(
+                    new PhoneNumber("+221" + phoneNumber),
+                    new PhoneNumber(twilioPhoneNumber),
+                    new URI("https://nondeluded-brianna-pettedly.ngrok-free.dev/twilio/voice")
+            ).create();
 
-            // Simulation uniquement pour le moment
-            // Ici plus tard on branchera WhatsApp ou appel vocal
+            log.info("Appel lancé avec succès. SID: {}", call.getSid());
 
         } catch (Exception e) {
-            log.error("Erreur lors de l'envoi de l'audio", e);
+            log.error("Erreur lors de l'envoi du rappel audio", e);
         }
     }
 }

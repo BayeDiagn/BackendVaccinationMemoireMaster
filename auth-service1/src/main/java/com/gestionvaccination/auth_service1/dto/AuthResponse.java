@@ -9,4 +9,7 @@ import lombok.Data;
 public class AuthResponse {
     private String token;
     private String type;
+    private String role;
+    private String langueMaternelle;
+    private Long userId;
 }

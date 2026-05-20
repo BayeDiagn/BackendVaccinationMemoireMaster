@@ -30,6 +30,10 @@ public class SecurityConfig1 {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**",
                                 "/swagger-ui/**",
+                                "/static/audios/**",
+                                "/audios/**",
+                                "/api/v1/appointments/api/test/call",
+                                "/api/v1/appointments/twilio/voice",
                                 "/swagger-ui.html",
                                 "/api/v1/appointments/test-reminders",
                                 "/api/v1/appointments/{appointmentId}",

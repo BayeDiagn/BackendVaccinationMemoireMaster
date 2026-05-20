@@ -64,7 +64,7 @@ public class UtilisateurMapper {
         if (utilisateur.getProfession() != null)
             utilisateurDTO.setProfession(utilisateur.getProfession());
 
-        if(utilisateur.getLocality() != null)
+        if(utilisateur.getLangueMaternelle() != null)
             utilisateurDTO.setLangueMaternelle(utilisateur.getLangueMaternelle());
 
 

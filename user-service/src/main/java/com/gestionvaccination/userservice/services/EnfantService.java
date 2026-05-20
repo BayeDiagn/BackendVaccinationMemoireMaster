@@ -98,4 +98,7 @@ public interface EnfantService {
      */
     long getNombreGarcons();
 
+
+    List<EnfantDTO> getEnfantByParentId(Long parentId);
+
 }

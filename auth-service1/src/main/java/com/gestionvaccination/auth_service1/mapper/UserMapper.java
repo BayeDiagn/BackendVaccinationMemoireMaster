@@ -17,6 +17,12 @@ public class UserMapper {
         user.setUsername(userDto.getUsername());
         user.setPassword(userDto.getPassword());
         user.setRole(userDto.getRole());
+
+        if(user.getLangueMaternelle()!=null){
+            user.setLangueMaternelle(userDto.getLangueMaternelle());
+        }else {
+            user.setLangueMaternelle(null);
+        }
         return user;
     }
 
@@ -28,6 +34,7 @@ public class UserMapper {
         userDto.setUsername(user.getUsername());
         userDto.setPassword(user.getPassword());
         userDto.setRole(user.getRole());
+        userDto.setLangueMaternelle(user.getLangueMaternelle());
         return userDto;
     }
 }

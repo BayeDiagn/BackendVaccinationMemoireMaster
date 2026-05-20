@@ -35,6 +35,7 @@ public class SecurityConfig1 {
                                 "/api/v1/users/{userId}",
                                 "/api/auth/v1/users",
                                 "/api/v1/users/enfants/{enfantId}",
+                                "/api/v1/users/enfants/parent/{parentId}",
                                 "/api/v1/users/enfants/by-qr-code/{qrCode}",
                                 "/api/v1/users/findUserByEmail/{email}",
                                "/api/v1/users/stats/by-centre/{centreId}/enfants"

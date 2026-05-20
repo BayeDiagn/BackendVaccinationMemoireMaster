@@ -2,6 +2,7 @@ package com.gestionvaccination.auth_service1.controller;
 
 import com.gestionvaccination.auth_service1.config.JwtUtils;
 import com.gestionvaccination.auth_service1.dto.*;
+import com.gestionvaccination.auth_service1.entity.User;
 import com.gestionvaccination.auth_service1.mapper.UserMapper;
 import com.gestionvaccination.auth_service1.repository.UserRepository;
 import com.gestionvaccination.auth_service1.service.UserService;
@@ -16,11 +17,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 
@@ -29,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/auth/v1")
 @RequiredArgsConstructor
+
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -49,6 +47,17 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Utilisateur existe déjà");
         }
 
+        // Si ce n'est pas un parent, on ne garde pas la langue maternelle
+        if (userDto.getRole() != null && userDto.getRole() != com.gestionvaccination.auth_service1.enums.UserRole.PARENT) {
+            userDto.setLangueMaternelle(null);
+        }
+
+        // Si c'est un parent, on exige la langue maternelle
+        if (userDto.getRole() == com.gestionvaccination.auth_service1.enums.UserRole.PARENT
+                && userDto.getLangueMaternelle() == null) {
+            return ResponseEntity.badRequest().body("La langue maternelle est obligatoire pour un parent");
+        }
+
         // Hasher le mot de passe avant de sauvegarder
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         userRepository.save(userDtoMapper.toEntity(userDto));
@@ -61,35 +70,84 @@ public class AuthController {
      * Endpoint de connexion (login)
      * Authentifie l'utilisateur et génère un JWT en cas de succès
      */
+//    @PostMapping("/login")
+//    public ResponseEntity<?> login(@RequestBody @Validated LoginRequest loginRequest) {
+//        try {
+//            // On tente d'authentifier avec le username et password
+//            Authentication authentication = authenticationManager.authenticate(
+//                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+//
+//            // Vérifier si l'authentification est réussie
+//            if (authentication.isAuthenticated()) {
+//                // Utiliser l'objet principal de l'authentification qui est un UserDetails
+//                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+//
+//                // Construire la réponse avec le token JWT en passant l'objet UserDetails
+//                AuthResponse response = AuthResponse.builder()
+//                        .token(jwtUtils.generateToken(userDetails))
+//                        .type("Bearer")
+//                        .build();
+//
+//                return ResponseEntity.ok(response);
+//            }
+//
+//            // Si authentification échoue
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Nom d'utilisateur ou mot de passe incorrect"));
+//
+//        } catch (AuthenticationException e) {
+//            // Si une exception survient (mot de passe incorrect, user introuvable, etc.)
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Nom d'utilisateur ou mot de passe incorrect"));
+//        }
+//    }
+
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Validated LoginRequest loginRequest) {
         try {
-            // On tente d'authentifier avec le username et password
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()
+                    )
+            );
 
-            // Vérifier si l'authentification est réussie
             if (authentication.isAuthenticated()) {
-                // Utiliser l'objet principal de l'authentification qui est un UserDetails
                 UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-                // Construire la réponse avec le token JWT en passant l'objet UserDetails
+                // Récupérer le vrai user en base
+                var user = userRepository.findByUsername(userDetails.getUsername());
+
+                if (user == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(new ErrorResponse("Utilisateur introuvable"));
+                }
+
+                String token = jwtUtils.generateToken((User) user);
+
                 AuthResponse response = AuthResponse.builder()
-                        .token(jwtUtils.generateToken(userDetails))
+                        .token(token)
                         .type("Bearer")
+                        .role(user.getRole().name())
+                        .userId(user.getId()) // ✅ AJOUT ICI
+                        .langueMaternelle(
+                                user.getRole().name().equals("PARENT") && user.getLangueMaternelle() != null
+                                        ? user.getLangueMaternelle().name()
+                                        : null
+                        )
                         .build();
 
                 return ResponseEntity.ok(response);
             }
 
-            // Si authentification échoue
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Nom d'utilisateur ou mot de passe incorrect"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ErrorResponse("Nom d'utilisateur ou mot de passe incorrect"));
 
         } catch (AuthenticationException e) {
-            // Si une exception survient (mot de passe incorrect, user introuvable, etc.)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Nom d'utilisateur ou mot de passe incorrect"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ErrorResponse("Nom d'utilisateur ou mot de passe incorrect"));
         }
     }
+
 
     /**
      * Endpoint pour changer le mot de passe

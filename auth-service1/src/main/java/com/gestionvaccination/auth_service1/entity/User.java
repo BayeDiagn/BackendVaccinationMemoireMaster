@@ -1,6 +1,7 @@
 package com.gestionvaccination.auth_service1.entity;
 
 
+import com.gestionvaccination.auth_service1.enums.LangueMaternelle;
 import com.gestionvaccination.auth_service1.enums.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,4 +43,7 @@ public class User {
     // private List<UserRole> roles;
 
     private boolean enabled = true;
+
+    @Enumerated(EnumType.STRING)
+    private LangueMaternelle langueMaternelle;
 }

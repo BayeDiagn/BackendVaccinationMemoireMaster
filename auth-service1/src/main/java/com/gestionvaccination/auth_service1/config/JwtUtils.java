@@ -1,5 +1,7 @@
 package com.gestionvaccination.auth_service1.config;
 
+import com.gestionvaccination.auth_service1.entity.User;
+import com.gestionvaccination.auth_service1.enums.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -52,19 +54,42 @@ public class JwtUtils {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(UserDetails userDetails) {
+    //Ancienne Version
+//    public String generateToken(UserDetails userDetails) {
+//        Map<String, Object> claims = new HashMap<>();
+//
+//        // Extrayez l'autorité et ajoutez-la sous forme de "role" ET "scope"
+//        Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
+//        if (!authorities.isEmpty()) {
+//            String role = authorities.iterator().next().getAuthority();
+//            claims.put("role", role);
+//            claims.put("scope", role);  // Ajoutez cette ligne pour compatibilité
+//        }
+//
+//        return createToken(claims, userDetails.getUsername());
+//    }
+
+    // ✅ NOUVELLE VERSION (celle qu’on va utiliser)
+    public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
 
-        // Extrayez l'autorité et ajoutez-la sous forme de "role" ET "scope"
-        Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
-        if (!authorities.isEmpty()) {
-            String role = authorities.iterator().next().getAuthority();
-            claims.put("role", role);
-            claims.put("scope", role);  // Ajoutez cette ligne pour compatibilité
+        String role = "ROLE_" + user.getRole().name();
+        claims.put("role", role);
+        claims.put("scope", role);
+
+        // ✅ Ajouter ID pour TOUS les utilisateurs
+        claims.put("userId", user.getId());
+
+
+        // ✅ Ajouter langueMaternelle uniquement si c’est un parent
+        if (user.getRole() == UserRole.PARENT && user.getLangueMaternelle() != null) {
+            claims.put("langueMaternelle", user.getLangueMaternelle().name());
+//            claims.put("id", user.getId());
         }
 
-        return createToken(claims, userDetails.getUsername());
+        return createToken(claims, user.getUsername());
     }
+
 
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()

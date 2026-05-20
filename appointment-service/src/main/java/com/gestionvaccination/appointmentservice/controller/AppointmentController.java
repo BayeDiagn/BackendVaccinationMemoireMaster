@@ -121,14 +121,14 @@ public class AppointmentController {
     }
 
 
-    @GetMapping("/test-reminders")
-    @Operation(summary = "Envoie de Rappels Manuelles ", description = "Envoie de Rappels Manuelles")
-    @ApiResponse(responseCode = "200", description = "Envoie de Rappels Manuelles")
-    public ResponseEntity<String> testReminders() {
-        vaccinationReminderScheduler.sendVaccinationReminders();
-        return ResponseEntity.ok("Rappels envoyés manuellement !");
-
-    }
+//    @GetMapping("/test-reminders")
+//    @Operation(summary = "Envoie de Rappels Manuelles ", description = "Envoie de Rappels Manuelles")
+//    @ApiResponse(responseCode = "200", description = "Envoie de Rappels Manuelles")
+//    public ResponseEntity<String> testReminders() {
+//        vaccinationReminderScheduler.sendVaccinationReminders();
+//        return ResponseEntity.ok("Rappels envoyés manuellement !");
+//
+//    }
 
 
 

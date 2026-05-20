@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * Contrôleur REST pour la gestion des utilisateurs
  */
+@CrossOrigin("*")
 @RestController
 @RequestMapping("/api/v1/users")
 @Tag(name = "Gestion des Utilisateurs", description = "APIs pour la gestion des utilisateurs du système de vaccination")

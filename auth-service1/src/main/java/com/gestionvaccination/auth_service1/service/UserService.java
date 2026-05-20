@@ -80,6 +80,7 @@ public class UserService {
         user.setUsername(authRequestDTO.getUsername());
         user.setPassword(passwordEncoder.encode(authRequestDTO.getPassword()));
         user.setRole(authRequestDTO.getRole());
+        user.setLangueMaternelle(authRequestDTO.getLangueMaternelle());
         user.setEnabled(true);
         User user1 = userRepository.save(user);
         UserDto userDto = userMapper.toDto(user1);

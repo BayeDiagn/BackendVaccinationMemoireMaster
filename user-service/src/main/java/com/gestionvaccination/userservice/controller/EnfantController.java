@@ -31,7 +31,7 @@ import java.util.Map;
  * Contrôleur REST pour la gestion des enfants
  */
 @RestController
-// @CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/v1/users/enfants")
 @Tag(name = "Gestion des Enfants", description = "APIs pour la gestion des enfants dans le système de vaccination")
 @SecurityRequirement(name = "bearerAuth") // C'est ici que tu appliques la sécurité
@@ -138,18 +138,18 @@ public class EnfantController {
         return ResponseEntity.noContent().build();
     }
 
-//    @GetMapping("/parent/{parentId}")
-//    @Operation(
-//        summary = "Obtenir les enfants d'un parent",
-//        description = "Récupère tous les enfants d'un parent spécifique"
-//    )
-//    @ApiResponse(responseCode = "200", description = "Liste des enfants du parent")
-//    public ResponseEntity<List<EnfantDTO>> obtenirEnfantsParParent(
-//            @Parameter(description = "ID du parent") @PathVariable Long parentId) {
-//
-//        List<EnfantDTO> enfants = enfantService.getEnfantByParentId(parentId);
-//        return ResponseEntity.ok(enfants);
-//    }
+    @GetMapping("/parent/{parentId}")
+    @Operation(
+        summary = "Obtenir les enfants d'un parent",
+        description = "Récupère tous les enfants d'un parent spécifique"
+    )
+    @ApiResponse(responseCode = "200", description = "Liste des enfants du parent")
+    public ResponseEntity<List<EnfantDTO>> obtenirEnfantsParParent(
+            @Parameter(description = "ID du parent") @PathVariable Long parentId) {
+
+        List<EnfantDTO> enfants = enfantService.getEnfantByParentId(parentId);
+        return ResponseEntity.ok(enfants);
+    }
 
     @GetMapping
     @Operation(

@@ -56,7 +56,10 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
             "/api/v1/users/register",          // Registration endpoint
             "/api/v1/users/login",// Exemple: Ajout d'une nouvelle route
             " /v3/api-docs/**",                 // Swagger docs\n" +
-            "/swagger-ui/**",                  // Swagger UI\n" +
+            "/swagger-ui/**",
+            "/static/audios/**",
+            "/api/test/**",
+            "/audios/**",// Swagger UI\n" +
             "/swagger-ui.html ",
             "/api/v1/localities/centres/{centreId}",
             "/api/v1/localities/{localityId}",
@@ -68,7 +71,10 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
             "/api/v1/vaccines/**",
             "/api/v1/vaccines/{vaccineId}",
             "/api/v1/appointments/**",
+            "/api/v1/appointments/api/test/call",
+            "/api/v1/appointments/twilio/voice",
             "/api/v1/appointments/{appointmentId}",
+            "/api/v1/users/enfants/parent/{parentId}",
             "/api/v1/users/{userId}",
             "/api/v1/users/enfants/{enfantId}",
             "/api/v1/appointments/{appointmentId}/status",
@@ -168,4 +174,5 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
     public static class Config {
         // Configurations spécifiques au filtre
     }
+
 }
