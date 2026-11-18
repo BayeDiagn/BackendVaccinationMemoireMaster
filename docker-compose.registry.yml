@@ -51,7 +51,7 @@ services:
       retries: 10
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: phpmyadmin:5.2   # image officielle multi-arch (amd64/arm64)
     container_name: phpmyadmin
     restart: always
     ports:
@@ -70,14 +70,6 @@ services:
       - "127.0.0.1:8761:8761"   # tableau de bord Eureka, local uniquement
 
   # ── Microservices ─────────────────────────────────────────
-
-  auth-service:
-    <<: *service
-    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-auth-service:${TAG:-latest}
-    container_name: auth-service
-    environment:
-      <<: *db-env
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/auth_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
 
   auth-service1:
     <<: *service
