@@ -187,5 +187,20 @@ services:
       auth-service1:
         condition: service_started
 
+  # ── Interface Web (React + Vite) ──────────────────────────
+
+  frontend-web:
+    build:
+      context: ../FrontendVaccinationMemoireMaster
+      args:
+        VITE_API_URL: http://gateway-service:9999
+    container_name: frontend-web
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      gateway-service:
+        condition: service_started
+
 volumes:
   mysql_data:
