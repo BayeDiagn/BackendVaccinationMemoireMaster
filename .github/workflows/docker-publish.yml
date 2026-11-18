@@ -14,9 +14,11 @@ permissions:
   contents: read
   packages: write
 
+# Les runs s'enchaînent sans s'annuler : chaque run ne reconstruit que les
+# services de son propre push, en annuler un ferait perdre ces images.
 concurrency:
   group: docker-publish-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   changes:
@@ -30,6 +32,7 @@ jobs:
         id: filter
         with:
           filters: |
+            workflow: .github/workflows/docker-publish.yml
             discovery-server: discovery-server/**
             gateway-service: gateway-service/**
             auth-service: auth-service/**
@@ -43,11 +46,14 @@ jobs:
       - id: select
         env:
           CHANGED: ${{ steps.filter.outputs.changes }}
+          WORKFLOW_CHANGED: ${{ steps.filter.outputs.workflow }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo 'services=["discovery-server","gateway-service","auth-service","auth-service1","user-service","appointment-service","vaccination-service","vaccine-service","location-service"]' >> "$GITHUB_OUTPUT"
+          ALL='["discovery-server","gateway-service","auth-service","auth-service1","user-service","appointment-service","vaccination-service","vaccine-service","location-service"]'
+          # Lancement manuel ou workflow modifié → tout reconstruire
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$WORKFLOW_CHANGED" = "true" ]; then
+            echo "services=${ALL}" >> "$GITHUB_OUTPUT"
           else
-            echo "services=${CHANGED}" >> "$GITHUB_OUTPUT"
+            echo "services=$(echo "$CHANGED" | jq -c 'map(select(. != "workflow"))')" >> "$GITHUB_OUTPUT"
           fi
 
   build-and-push:
