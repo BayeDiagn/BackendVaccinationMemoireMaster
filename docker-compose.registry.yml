@@ -6,7 +6,7 @@
 #   docker compose -f docker-compose.registry.yml up -d
 #
 # Variables optionnelles (fichier .env ou shell) :
-#   GHCR_OWNER   compte/organisation GitHub    (défaut : fallmourtada)
+#   GHCR_OWNER   compte/organisation GitHub    (défaut : bayediagn)
 #   TAG          version des images            (défaut : latest, ex. sha-fa0162c)
 #   MYSQL_ROOT_PASSWORD                          (défaut : root)
 #   FRONT_TAG / FRONT_PORT  version et port du frontend (défaut : latest / 80)
@@ -63,7 +63,7 @@ services:
       - mysql
 
   discovery-server:
-    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-discovery-server:${TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-discovery-server:${TAG:-latest}
     container_name: discovery-server
     restart: unless-stopped
     ports:
@@ -73,7 +73,7 @@ services:
 
   auth-service:
     <<: *service
-    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-auth-service:${TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-auth-service:${TAG:-latest}
     container_name: auth-service
     environment:
       <<: *db-env
@@ -81,7 +81,7 @@ services:
 
   auth-service1:
     <<: *service
-    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-auth-service1:${TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-auth-service1:${TAG:-latest}
     container_name: auth-service1
     environment:
       <<: *db-env
@@ -89,7 +89,7 @@ services:
 
   user-service:
     <<: *service
-    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-user-service:${TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-user-service:${TAG:-latest}
     container_name: user-service
     environment:
       <<: *db-env
@@ -99,7 +99,7 @@ services:
 
   appointment-service:
     <<: *service
-    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-appointment-service:${TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-appointment-service:${TAG:-latest}
     container_name: appointment-service
     environment:
       <<: *db-env
@@ -107,7 +107,7 @@ services:
 
   vaccination-service:
     <<: *service
-    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-vaccination-service:${TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-vaccination-service:${TAG:-latest}
     container_name: vaccination-service
     environment:
       <<: *db-env
@@ -115,7 +115,7 @@ services:
 
   vaccine-service:
     <<: *service
-    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-vaccine-service:${TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-vaccine-service:${TAG:-latest}
     container_name: vaccine-service
     environment:
       <<: *db-env
@@ -123,14 +123,14 @@ services:
 
   location-service:
     <<: *service
-    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-location-service:${TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-location-service:${TAG:-latest}
     container_name: location-service
     environment:
       <<: *db-env
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/location_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
 
   gateway-service:
-    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-gateway-service:${TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-gateway-service:${TAG:-latest}
     container_name: gateway-service
     restart: unless-stopped
     # Le web passe par le frontend (port 80 → nginx → gateway).
@@ -150,7 +150,7 @@ services:
   # ── Interface web (React servi par nginx, /api relayé vers la gateway) ──
   # Image publiée par le dépôt FrontendVaccinationMemoireMaster
   frontend:
-    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-frontend:${FRONT_TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-bayediagn}/vaccinapp-frontend:${FRONT_TAG:-latest}
     container_name: frontend
     restart: unless-stopped
     ports:
