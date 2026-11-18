@@ -15,7 +15,9 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet; // ★ AJOUTÉ
 import java.util.List;
+import java.util.Set; // ★ AJOUTÉ
 
 @Component
 @RequiredArgsConstructor
@@ -26,6 +28,9 @@ public class VaccinationReminderScheduler {
     private final AppointmentService appointmentService;
     private final EmailService emailService;
     private final AudioReminderService audioReminderService;
+
+    // ★ AJOUTÉ : mémorise les IDs des rendez-vous déjà notifiés pour éviter les doublons
+    private final Set<Long> alreadyNotified = new HashSet<>();
 
     /**
      * Planificateur qui s'exécute tous les jours à 13h40
@@ -91,7 +96,35 @@ public class VaccinationReminderScheduler {
 //
 //                    }
 
-                    audioReminderService.sendAudioReminder("782944658","WOLOF");
+                    // ★ AJOUTÉ : vérifier si ce rendez-vous a déjà reçu une notification
+                    if (!alreadyNotified.contains(appointment.getId())) {
+                        // ★ AJOUTÉ : utilisation du vrai nom du parent, enfant et vaccin
+                        String nomParent = parent.getPrenom() + " " + parent.getNom();
+                        String nomEnfant = enfant.getPrenom() + " " + enfant.getNom();
+                        String vaccin = appointment.getNomVaccinAEffectuer() != null
+                                ? appointment.getNomVaccinAEffectuer() : "vaccin";
+
+                        // ★ NOUVEAUTÉ : envoi email HTML professionnel au parent
+                        // Design avec couleurs vertes, logo, date encadrée — déjà développé dans EmailService
+                        emailService.sendVaccinationReminder(
+                                parent.getEmail(),
+                                parent.getNom(),
+                                enfant.getPrenom(),
+                                enfant.getNom(),
+                                appointment.getDate(),
+                                vaccin,
+                                daysRemaining
+                        );
+
+                        // ★ AJOUTÉ : envoi WhatsApp Infobip (image bébé + emojis pour mamans analphabètes)
+                        audioReminderService.sendAudioReminder(
+                                "782944658", "WOLOF", nomParent, nomEnfant, vaccin);
+
+                        alreadyNotified.add(appointment.getId()); // ★ AJOUTÉ : marquer comme notifié
+                        log.info("Rendez-vous ID {} marqué comme notifié (email + WhatsApp)", appointment.getId()); // ★ AJOUTÉ
+                    } else {
+                        log.info("Rendez-vous ID {} déjà notifié, envoi ignoré", appointment.getId()); // ★ AJOUTÉ
+                    }
 
                 } else {
                     log.warn("Données manquantes pour le rendez-vous ID: {}", appointment.getId());

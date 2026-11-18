@@ -85,7 +85,9 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
             "/api/v1/users/findUserByEmail/{email}",
             "/api/v1/users/stats/by-centre/{centreId}/enfants","/api/v1/appointments/test-reminders",
             "/api/v1/appointments/{appointmentId}",
-            "/api/v1/appointments/{appointmentId}/status"
+            "/api/v1/appointments/{appointmentId}/status",
+            "/v3/api-docs/**",
+            "/swagger-ui.html"
     );
 
     @Override

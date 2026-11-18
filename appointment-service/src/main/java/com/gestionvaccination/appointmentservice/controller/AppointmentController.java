@@ -31,6 +31,7 @@ import java.util.List;
 public class AppointmentController {
     private final AppointmentService appointmentService;
     private final VaccinationReminderScheduler vaccinationReminderScheduler;
+    private final com.gestionvaccination.appointmentservice.service.AudioReminderService audioReminderService; // ★ AJOUTÉ
 
     @PostMapping
     @Operation(summary = "Créer un rendez-vous", description = "Crée un nouveau rendez-vous pour un enfant")
@@ -126,6 +127,7 @@ public class AppointmentController {
 //    @ApiResponse(responseCode = "200", description = "Envoie de Rappels Manuelles")
 //    public ResponseEntity<String> testReminders() {
 //        vaccinationReminderScheduler.sendVaccinationReminders();
+//        // ★ AJOUTÉ ci-dessous : endpoint création template WhatsApp professionnel
 //        return ResponseEntity.ok("Rappels envoyés manuellement !");
 //
 //    }
@@ -134,4 +136,14 @@ public class AppointmentController {
 
 
 
+
+    // AJOUTÉ : appeler UNE SEULE FOIS pour créer le template WhatsApp professionnel
+    // POST /api/v1/appointments/whatsapp/create-template
+    // Après approbation Meta (24-48h), messages en français avec vrais noms parent/enfant/vaccin
+    @PostMapping("/whatsapp/create-template")
+    @Operation(summary = "Creer le template WhatsApp vaccination (appel unique)")
+    public ResponseEntity<String> createWhatsappTemplate() {
+        String result = audioReminderService.createVaccinationTemplate();
+        return ResponseEntity.ok("Resultat : " + result);
+    }
 }

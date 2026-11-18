@@ -1,0 +1,191 @@
+version: '3.8'
+
+# ============================================================
+# VaccinApp — Docker Compose complet (infrastructure + microservices)
+# Usage : docker compose -f docker-compose-complet.yml up --build
+# ============================================================
+
+services:
+
+  # ── Infrastructure ────────────────────────────────────────
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_server
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+    depends_on:
+      - mysql
+
+  # ── Registre de services (Eureka) ─────────────────────────
+
+  discovery-server:
+    build: ./discovery-server
+    container_name: discovery-server
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+
+  # ── Microservices ─────────────────────────────────────────
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/auth_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  auth-service1:
+    build: ./auth-service1
+    container_name: auth-service1
+    restart: unless-stopped
+    ports:
+      - "8089:8089"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/vaccimed_auth?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/user_vaccination_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  appointment-service:
+    build: ./appointment-service
+    container_name: appointment-service
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/appointment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  vaccination-service:
+    build: ./vaccination-service
+    container_name: vaccination-service
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/vaccination_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  vaccine-service:
+    build: ./vaccine-service
+    container_name: vaccine-service
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/vaccine_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  location-service:
+    build: ./location-service
+    container_name: location-service
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/location_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway-service
+    restart: unless-stopped
+    ports:
+      - "9999:9999"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    depends_on:
+      discovery-server:
+        condition: service_started
+      user-service:
+        condition: service_started
+      appointment-service:
+        condition: service_started
+      auth-service1:
+        condition: service_started
+
+volumes:
+  mysql_data:
