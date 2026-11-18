@@ -1,0 +1,165 @@
+# ============================================================
+# VaccinApp — lancement à partir des images publiées sur GHCR
+# (aucune compilation locale)
+#
+#   docker compose -f docker-compose.registry.yml pull
+#   docker compose -f docker-compose.registry.yml up -d
+#
+# Variables optionnelles (fichier .env ou shell) :
+#   GHCR_OWNER   compte/organisation GitHub    (défaut : fallmourtada)
+#   TAG          version des images            (défaut : latest, ex. sha-fa0162c)
+#   MYSQL_ROOT_PASSWORD                          (défaut : root)
+#   FRONT_TAG / FRONT_PORT  version et port du frontend (défaut : latest / 80)
+#
+# Points d entrée publics : le frontend (80) et la gateway (9999, mobile). Les microservices ne
+# publient aucun port : ils communiquent sur le réseau Docker interne.
+# MySQL, phpMyAdmin et Eureka écoutent uniquement sur 127.0.0.1 ; depuis
+# votre poste :  ssh -L 8080:localhost:8080 -L 8761:localhost:8761 user@vps
+# ============================================================
+
+x-service: &service
+  restart: unless-stopped
+  depends_on:
+    mysql:
+      condition: service_healthy
+    discovery-server:
+      condition: service_started
+
+x-db-env: &db-env
+  SPRING_DATASOURCE_USERNAME: root
+  SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+
+services:
+
+  # ── Infrastructure ────────────────────────────────────────
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_server
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports:
+      - "127.0.0.1:3306:3306"   # local uniquement
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - "127.0.0.1:8080:80"     # local uniquement
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
+
+  discovery-server:
+    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-discovery-server:${TAG:-latest}
+    container_name: discovery-server
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8761:8761"   # tableau de bord Eureka, local uniquement
+
+  # ── Microservices ─────────────────────────────────────────
+
+  auth-service:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-auth-service:${TAG:-latest}
+    container_name: auth-service
+    environment:
+      <<: *db-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/auth_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+
+  auth-service1:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-auth-service1:${TAG:-latest}
+    container_name: auth-service1
+    environment:
+      <<: *db-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/vaccimed_auth?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+
+  user-service:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-user-service:${TAG:-latest}
+    container_name: user-service
+    environment:
+      <<: *db-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/user_vaccination_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    volumes:
+      - qr_codes:/app/qr_codes
+
+  appointment-service:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-appointment-service:${TAG:-latest}
+    container_name: appointment-service
+    environment:
+      <<: *db-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/appointment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+
+  vaccination-service:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-vaccination-service:${TAG:-latest}
+    container_name: vaccination-service
+    environment:
+      <<: *db-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/vaccination_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+
+  vaccine-service:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-vaccine-service:${TAG:-latest}
+    container_name: vaccine-service
+    environment:
+      <<: *db-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/vaccine_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+
+  location-service:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-location-service:${TAG:-latest}
+    container_name: location-service
+    environment:
+      <<: *db-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_server:3306/location_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+
+  gateway-service:
+    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-gateway-service:${TAG:-latest}
+    container_name: gateway-service
+    restart: unless-stopped
+    # Le web passe par le frontend (port 80 → nginx → gateway).
+    # 9999 reste ouvert uniquement pour l'application mobile Flutter : à retirer
+    # dès qu'elle utilisera http://<serveur>/api/... (même chemin via nginx).
+    ports:
+      - "9999:9999"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    depends_on:
+      - discovery-server
+      - user-service
+      - appointment-service
+      - auth-service1
+
+  # ── Interface web (React servi par nginx, /api relayé vers la gateway) ──
+  # Image publiée par le dépôt FrontendVaccinationMemoireMaster
+  frontend:
+    image: ghcr.io/${GHCR_OWNER:-fallmourtada}/vaccinapp-frontend:${FRONT_TAG:-latest}
+    container_name: frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONT_PORT:-80}:8080"
+    environment:
+      API_UPSTREAM: http://gateway-service:9999
+    depends_on:
+      - gateway-service
+
+volumes:
+  mysql_data:
+  qr_codes:

@@ -1,0 +1,95 @@
+# Construit et pousse l'image Docker de chaque microservice sur GHCR.
+# - push sur main : seules les images des services modifiés sont reconstruites
+# - lancement manuel (onglet Actions) : toutes les images sont reconstruites
+# Images : ghcr.io/<owner>/vaccinapp-<service>:latest et :sha-<commit>
+
+name: Docker images → GHCR
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.select.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            discovery-server: discovery-server/**
+            gateway-service: gateway-service/**
+            auth-service: auth-service/**
+            auth-service1: auth-service1/**
+            user-service: user-service/**
+            appointment-service: appointment-service/**
+            vaccination-service: vaccination-service/**
+            vaccine-service: vaccine-service/**
+            location-service: location-service/**
+
+      - id: select
+        env:
+          CHANGED: ${{ steps.filter.outputs.changes }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo 'services=["discovery-server","gateway-service","auth-service","auth-service1","user-service","appointment-service","vaccination-service","vaccine-service","location-service"]' >> "$GITHUB_OUTPUT"
+          else
+            echo "services=${CHANGED}" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-and-push:
+    needs: changes
+    if: needs.changes.outputs.services != '[]' && needs.changes.outputs.services != ''
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.changes.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Nom de l'image (owner en minuscules)
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/vaccinapp-${{ matrix.service }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-
+          labels: |
+            org.opencontainers.image.title=vaccinapp-${{ matrix.service }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.service }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}

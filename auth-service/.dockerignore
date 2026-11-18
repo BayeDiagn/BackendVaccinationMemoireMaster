@@ -1,0 +1,8 @@
+target/
+.mvn/wrapper/*.jar
+.idea/
+.vscode/
+*.iml
+.git
+Dockerfile
+.dockerignore

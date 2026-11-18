@@ -81,3 +81,25 @@ L'application Flutter se connecte via le gateway sur le port **9999**.
 - En local (même machine) : `http://localhost:9999`
 - En réseau local : `http://IP_DU_SERVEUR:9999`
 - Avec ngrok (accès public) : `ngrok http 9999` → utiliser l'URL fournie
+
+---
+
+## Déploiement à partir des images GHCR (sans compiler)
+
+À chaque `git push` sur `main`, GitHub Actions (`.github/workflows/docker-publish.yml`)
+reconstruit l'image des services modifiés et la pousse sur GHCR :
+`ghcr.io/<owner>/vaccinapp-<service>:latest` et `:sha-<commit>`.
+Le bouton **Run workflow** (onglet Actions) reconstruit toutes les images.
+
+Sur le serveur :
+
+```bash
+# Seulement si les packages GHCR sont privés (token avec le droit read:packages)
+echo <TOKEN> | docker login ghcr.io -u <utilisateur> --password-stdin
+
+docker compose -f docker-compose.registry.yml pull
+docker compose -f docker-compose.registry.yml up -d
+
+# Revenir à une version précise
+TAG=sha-abc1234 docker compose -f docker-compose.registry.yml up -d
+```
